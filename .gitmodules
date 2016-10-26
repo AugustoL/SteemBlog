@@ -1,0 +1,7 @@
+[submodule "go-ethereum"]
+	path = go-ethereum
+	url = https://github.com/ethereum/go-ethereum
+	branch = develop
+[submodule "solcompiler-js"]
+	path = solcompiler-js
+	url = https://github.com/AugustoL/solcompiler-js

@@ -1,0 +1,6 @@
+node_modules
+src/libs/
+npm-debug.log
+build
+blockchain/*
+!example
