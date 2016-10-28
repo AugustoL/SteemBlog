@@ -18,8 +18,8 @@ export function getNodeInfo(){
             connected: Store.web3.isConnected(),
             network: Store.web3.version.network,
             version: Store.web3.version.ethereum,
-            networkType: (Store.web3.version.ethereum == '1') ? 'Livenet'
-                : (Store.web3.version.ethereum == '2') ? 'Testnet' : 'Private',
+            networkType: (Store.web3.version.network == '1') ? 'Livenet'
+                : (Store.web3.version.network == '2') ? 'Testnet' : 'Private',
             hashrate: Store.web3.eth.hashrate,
             peers: Store.web3.net.peerCount,
             syncing: Store.web3.eth.syncing
@@ -101,7 +101,7 @@ export function getBlogInfo(callback) {
     function(err, results) {
         if (err)
             callback(err, null);
-        else {
+        else
             callback(null, {
                 owner: results[0],
                 postsAmount: parseInt(results[1])-1,
@@ -109,8 +109,7 @@ export function getBlogInfo(callback) {
                 months: results[3],
                 balance: results[4],
                 events: results[5]
-            })
-        }
+            });
     });
 }
 

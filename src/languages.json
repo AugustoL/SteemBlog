@@ -48,7 +48,8 @@
 		"editPost": "Edit Post",
 		"backAdmin": "Back to Admin",
 		"yes": "Yes",
-		"no": "No"
+		"no": "No",
+		"reload": "Reload"
 	},
 	"es": {
 		"loading": "Cargando",
@@ -99,6 +100,7 @@
 		"editPost": "Editar Post",
 		"backAdmin": "Volver a Admin",
 		"yes": "Si",
-		"no": "No"
+		"no": "No",
+		"reload": "Recargar"
 	}
 }

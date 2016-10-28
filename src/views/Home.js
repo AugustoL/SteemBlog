@@ -29,7 +29,6 @@ export default class Home extends React.Component {
             }
             return null;
         }
-
         this.state = {
             loading: true,
             postID: getParameter('id') || 0,
@@ -63,26 +62,34 @@ export default class Home extends React.Component {
         var self = this;
         self.setState({loading: true});
         Actions.Ethereum.getPost(id, function(err, post){
-            if (err)
+            if (err){
                 console.error(err);
-            if ((self.state.month.length == 0) || (self.state.categories.length == 0))
+                var nodeInfo = self.state.nodeInfo;
+                nodeInfo.connected = false;
+                self.setState({loading: false, nodeInfo: nodeInfo});
+            } else if ((self.state.month.length == 0) || (self.state.categories.length == 0))
                 Actions.Ethereum.getBlogInfo(function(err, info){
-                    if (err)
+                    if (err){
                         console.error(err);
-                    var months = [];
-                    var categories = [];
-                    var monthNames = ["","January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                    if (Store.lang == 'es')
-                        monthNames = ["","Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-                    for (var i = 0; i < info.categories.length; i++)
-                        if (info.categories[i].name.length > 0)
-                            categories.push({value: info.categories[i].name, label: info.categories[i].name+"("+info.categories[i].amount+")"});
-                    for (var i = 0; i < info.months.length; i++)
-                        months.push({
-                            value: parseInt(info.months[i].name.split('/')[0])+"/"+info.months[i].name.split('/')[1].replace(/[^\w\s]/gi, ''),
-                            label: monthNames[parseInt(info.months[i].name.split('/')[0])]+" "+info.months[i].name.split('/')[1].replace(/[^\w\s]/gi, '')+"("+info.months[i].amount+")"
-                        });
-                    self.setState({loading: false, info: info, posts: [post], categories: categories, months: months});
+                        var nodeInfo = self.state.nodeInfo;
+                        nodeInfo.connected = false;
+                        self.setState({loading: false, nodeInfo: nodeInfo});
+                    } else {
+                        var months = [];
+                        var categories = [];
+                        var monthNames = ["","January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                        if (Store.lang == 'es')
+                            monthNames = ["","Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                        for (var i = 0; i < info.categories.length; i++)
+                            if (info.categories[i].name.length > 0)
+                                categories.push({value: info.categories[i].name, label: info.categories[i].name+"("+info.categories[i].amount+")"});
+                        for (var i = 0; i < info.months.length; i++)
+                            months.push({
+                                value: parseInt(info.months[i].name.split('/')[0])+"/"+info.months[i].name.split('/')[1].replace(/[^\w\s]/gi, ''),
+                                label: monthNames[parseInt(info.months[i].name.split('/')[0])]+" "+info.months[i].name.split('/')[1].replace(/[^\w\s]/gi, '')+"("+info.months[i].amount+")"
+                            });
+                        self.setState({loading: false, info: info, posts: [post], categories: categories, months: months});
+                    }
                 })
             else
                 self.setState({loading: false, posts: [post], postID: id});
@@ -97,36 +104,41 @@ export default class Home extends React.Component {
         var fromPost = parseInt(page)*10;
         var toPost = fromPost+10;
         Actions.Ethereum.getBlogInfo(function(err, info){
-            if (err)
+            if (err){
                 console.error(err);
-            if ((info.postsAmount) < fromPost){
-                fromPost = 1;
-                toPost = fromPost+10;
-                page = 0;
-            } else if ((category != 'all') || (month != 'all')){
-                fromPost = 1;
-                toPost = info.postsAmount;
+                var nodeInfo = self.state.nodeInfo;
+                nodeInfo.connected = false;
+                self.setState({loading: false, nodeInfo: nodeInfo});
+            } else {
+                if ((info.postsAmount) < fromPost){
+                    fromPost = 1;
+                    toPost = fromPost+10;
+                    page = 0;
+                } else if ((category != 'all') || (month != 'all')){
+                    fromPost = 1;
+                    toPost = info.postsAmount;
+                }
+                Actions.Ethereum.getPosts(fromPost, toPost, category, month, false, function(err, posts){
+                    if (err)
+                        console.error(err);
+                    var months = [];
+                    var categories = [];
+                    var monthNames = ["","January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                    if (Store.lang == 'es')
+                        monthNames = ["","Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                    if (parseInt(page)*10 > posts.length)
+                        posts.slice(parseInt(page)*10);
+                    for (var i = 0; i < info.categories.length; i++)
+                        if (info.categories[i].name.length > 0)
+                            categories.push({value: info.categories[i].name, label: info.categories[i].name+"("+info.categories[i].amount+")"});
+                    for (var i = 0; i < info.months.length; i++)
+                        months.push({
+                            value: parseInt(info.months[i].name.split('/')[0])+"/"+info.months[i].name.split('/')[1].replace(/[^\w\s]/gi, ''),
+                            label: monthNames[parseInt(info.months[i].name.split('/')[0])]+" "+info.months[i].name.split('/')[1].replace(/[^\w\s]/gi, '')+"("+info.months[i].amount+")"
+                        });
+                    self.setState({loading: false, info: info, posts: posts, categories: categories, months: months, page: page});
+                });
             }
-            Actions.Ethereum.getPosts(fromPost, toPost, category, month, false, function(err, posts){
-                if (err)
-                    console.error(err);
-                var months = [];
-                var categories = [];
-                var monthNames = ["","January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                if (Store.lang == 'es')
-                    monthNames = ["","Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-                if (parseInt(page)*10 > posts.length)
-                    posts.slice(parseInt(page)*10);
-                for (var i = 0; i < info.categories.length; i++)
-                    if (info.categories[i].name.length > 0)
-                        categories.push({value: info.categories[i].name, label: info.categories[i].name+"("+info.categories[i].amount+")"});
-                for (var i = 0; i < info.months.length; i++)
-                    months.push({
-                        value: parseInt(info.months[i].name.split('/')[0])+"/"+info.months[i].name.split('/')[1].replace(/[^\w\s]/gi, ''),
-                        label: monthNames[parseInt(info.months[i].name.split('/')[0])]+" "+info.months[i].name.split('/')[1].replace(/[^\w\s]/gi, '')+"("+info.months[i].amount+")"
-                    });
-                self.setState({loading: false, info: info, posts: posts, categories: categories, months: months, page: page});
-            });
         })
     }
 
@@ -154,6 +166,7 @@ export default class Home extends React.Component {
                             <div class="col-xs-3"/>
                             <div class="col-xs-6 whiteBox text-center">
                                 <h2>{STRINGS.noNetwork}</h2>
+                                <h3><a onClick={()=>window.location.reload()}>{STRINGS.reload}</a></h3>
                             </div>
                         </div>
                     </div>
