@@ -128,6 +128,7 @@ export default class Admin extends React.Component {
         var self = this;
         self.setState({loading: true});
         console.log("\n Removing post"+postPos+" \n\n");
+        console.log(Store.contract);
         var payloadData = Actions.Ethereum.buildFunctionData([
             postPos
         ], 'removePost', Store.contract.ABI);

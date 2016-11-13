@@ -52,17 +52,6 @@ export default class Configure extends React.Component {
                         </div>
                         <form class="col-xs-8 col-xs-offset-2 col-md-6 col-md-offset-3">
                             <div class="form-group">
-                                <label for="addressInput">Blog Contract Address</label>
-                                <input
-                                    type="text"
-                                    class="form-control"
-                                    id="addressInput"
-                                    value={self.state.contractAddress}
-                                    onChange={(event) => self.setState({contractAddress: event.target.value})}
-                                    placeholder="Contract Address"
-                                />
-                            </div>
-                            <div class="form-group">
                                 <label for="web3HostINput">Web3 Provider</label>
                                 <input
                                     type="text"
@@ -70,7 +59,7 @@ export default class Configure extends React.Component {
                                     id="web3HostINput"
                                     value={self.state.web3Provider}
                                     onChange={(event) => self.setState({web3Provider: event.target.value})}
-                                    placeholder="http://localhost:8545"
+                                    placeholder="URL"
                                 />
                             </div>
                             <div class="row margin-bottom margin-top text-center">

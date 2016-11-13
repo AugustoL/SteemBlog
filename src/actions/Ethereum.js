@@ -127,7 +127,7 @@ export function getPosts(begin, end, category, month, draft, callback){
             postCallback(err);
         });
     }, function(err){
-        toReturn.sort(function(a,b){return(a.info.pos-b.info.pos)});
+        toReturn.sort(function(a,b){return(b.info.pos-a.info.pos)});
         callback(err, toReturn);
     });
 }

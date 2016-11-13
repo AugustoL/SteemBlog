@@ -8,21 +8,12 @@ class AppStore extends EventEmitter {
 	constructor() {
 
 		super();
-		if (window.localStorage.getItem('accounts'))
-			this.accounts = JSON.parse(window.localStorage.accounts);
-		else
-			this.accounts = [];
-		if (window.localStorage.getItem('contract'))
-			this.contract = JSON.parse(window.localStorage.contract);
-		else
-			this.contract = {
-				address: appConfig.contractAddress,
-				ABI: JSON.parse(contracts.BKCBlog.interface)
-			}
-		if (window.localStorage.getItem('web3Provider'))
-			this.web3Provider = window.localStorage.web3Provider;
-		else
-			this.web3Provider = appConfig.web3Provider;
+		this.contract = {
+			address: appConfig.contractAddress,
+			ABI: JSON.parse(contracts.BKCBlog.interface)
+		}
+
+		this.web3Provider = appConfig.web3Provider;
 
 		this.web3 = null;
 
@@ -31,21 +22,6 @@ class AppStore extends EventEmitter {
 		else
 			this.lang = navigator.language;
 		console.log('Local storage', window.localStorage);
-	}
-
-	setAccounts(accounts) {
-		this.accounts = [];
-		for (var i = 0; i < accounts.length; i++)
-			this.accounts.push(accounts[i]);
-		window.localStorage.setItem('accounts', JSON.stringify(this.accounts));
-	}
-
-	setContract(address, ABI) {
-		this.contract = {
-			address: address,
-			ABI: ABI
-		}
-		window.localStorage.setItem('contract', JSON.stringify(this.contract));
 	}
 
 	setWeb3Provider(provider) {
@@ -64,16 +40,6 @@ class AppStore extends EventEmitter {
 		        this.lang = action.lang;
 				window.localStorage.setItem('lang', action.lang);
 		        this.emit("languageChanged");
-		        break;
-		    }
-		    case "SET_CONTRACT": {
-		        this.setContract(action.address, action.ABI)
-		        this.emit("contractChanged");
-		        break;
-		    }
-			case "ADD_ACCOUNTS": {
-		        this.addAccounts(action.accounts)
-		        this.emit("accountsChanged");
 		        break;
 		    }
 		}
