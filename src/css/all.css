@@ -5,31 +5,36 @@ html{
 }
 
 @font-face {
-    font-family: 'Raleway';
-	font-style: 'normal';
-	font-weight: 'normal';
-    src: url('assets/fonts/Raleway-Regular.ttf');
+  font-family: 'FontAwesome';
+  src: url('fonts/fontawesome-webfont.ttf');
 }
 
 @font-face {
-    font-family: 'Raleway-Bold';
+  font-family: 'Raleway';
+	font-style: 'normal';
+	font-weight: 'normal';
+  src: url('assets/fonts/Raleway-Regular.ttf');
+}
+
+@font-face {
+  font-family: 'Raleway-Bold';
 	font-style: 'normal';
 	font-weight: 'bold';
-    src: url('assets/fonts/Raleway-Bold.ttf');
+  src: url('assets/fonts/Raleway-Bold.ttf');
 }
 
 @font-face {
-    font-family: 'Raleway-Italic';
+  font-family: 'Raleway-Italic';
 	font-style: 'italic';
 	font-weight: 'normal';
-    src: url('assets/fonts/Raleway-Italic.ttf');
+  src: url('assets/fonts/Raleway-Italic.ttf');
 }
 
 @font-face {
-    font-family: 'Raleway-Heavy';
+  font-family: 'Raleway-Heavy';
 	font-style: 'bold';
 	font-weight: 'italic';
-    src: url('assets/fonts/Raleway-BoldItalic.ttf');
+  src: url('assets/fonts/Raleway-BoldItalic.ttf');
 }
 
 body{
@@ -86,6 +91,7 @@ a{
 }
 .bodyPost{
 	margin-top: 10px;
+	font-size: 18px;
 }
 
 a{

@@ -8,22 +8,15 @@ import createHashHistory from 'history/lib/createHashHistory';
 //Views
 import Layout from "./Layout";
 import Home from "./views/Home";
-import Admin from "./views/Admin";
-import Configure from "./views/Configure";
-
-//Actions
-import * as Actions from "./actions";
 
 import Store from "./Store";
-var appConfig = JSON.parse(require('./config.json'));
-
-Actions.Config.configure(Store.web3Provider || appConfig.web3Provider);
+var appConfig = require('./config.json');
 
 //CSS
+
 require('../node_modules/bootstrap/dist/css/bootstrap.css');
-require('../node_modules/bootstrap/dist/css/bootstrap-theme.css');
 require('../node_modules/react-select/dist/react-select.css');
-require('font-awesome-webpack');
+require('../node_modules/font-awesome/css/font-awesome.css');
 require('url');
 require('./css/all.css');
 
@@ -35,12 +28,7 @@ const app = document.getElementById('app');
 ReactDOM.render(
   <Router history={history}>
     <Route path="/" component={Layout}>
-
-        <IndexRoute component={Home}></IndexRoute>
-        
-        <Route path="/admin" name="admin" component={Admin}></Route>
-        <Route path="/configure" name="configure" component={Configure}></Route>
-
+      <IndexRoute component={Home}></IndexRoute>
     </Route>
   </Router>,
 app);

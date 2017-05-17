@@ -1,6 +1,5 @@
 node_modules
-src/libs/
+src/index.min*
 npm-debug.log
 build
-blockchain/*
 !example

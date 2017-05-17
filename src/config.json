@@ -1,15 +1,14 @@
 {
-    "web3Provider": " https://morden.infura.io/WKNyJ0kClh8Ao5LdmO7z ",
-    "contractAddress": "0xf17aa4c6895c92d8560906f56f214e29456a6462",
-    "blogTitle": "AugustoLemble BKCBlog",
-    "facebookLink": "https://fb.com/augusto8",
-    "twitterLink": "https://twitter.com/LembleAugusto",
-    "linkedinLink": "https://ar.linkedin.com/in/augustolemble",
-    "githubLink": "https://github.com/AugustoL",
-    "contactEmail": "me@augustolemble.com",
-    "file": {
-        "title": "myCV",
-        "url": "assets/AugustoLembleCV.pdf",
-        "name": "Augusto Lemble CV.pdf"
-    }
+  "steemUsername": "augustol",
+  "blogTitle": "AugustoLemble BKCBlog",
+  "facebookLink": "https://fb.com/augusto8",
+  "twitterLink": "https://twitter.com/LembleAugusto",
+  "linkedinLink": "https://ar.linkedin.com/in/augustolemble",
+  "githubLink": "https://github.com/AugustoL",
+  "contactEmail": "me@augustolemble.com",
+  "file": {
+    "title": "myCV",
+    "url": "assets/AugustoLembleCV.pdf",
+    "name": "Augusto Lemble CV.pdf"
+  }
 }
