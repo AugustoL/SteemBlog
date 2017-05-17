@@ -183,6 +183,9 @@ export default class Home extends React.Component {
                 <div class="col-xs-12 col-sm-9">
                   <div class="row post whiteBox titlebox">
                     <h1><a  class="titleLink" onClick={() => self.loadPosts(1, 'all', 'all')}>{config.blogTitle || ""}</a>
+                      <a href={"https://steemit.com/@"+config.steemUsername} target="_blank" class="fa iconTitle pull-right">
+                        <img src="assets/steemit-black.png" class="steemit-icon-big"></img>
+                      </a>
                       { config.facebookLink ? <a href={config.facebookLink} target="_blank" class="fa fa-facebook iconTitle pull-right"></a> : <a/>}
                       { config.twitterLink ? <a href={config.twitterLink} target="_blank" class="fa fa-twitter iconTitle pull-right"></a> : <a/>}
                       { config.linkedinLink ? <a href={config.linkedinLink} target="_blank" class="fa fa-linkedin iconTitle pull-right"></a> : <a/>}
@@ -210,7 +213,16 @@ export default class Home extends React.Component {
                               >
                                 Share <span className="fa fa-twitter"/>
                               </TwitterButton>
-                              <a onClick={() => self.loadPosts(1, 'all', 'all')}><h3>{STRINGS.goBack}</h3></a>
+                              <div class="row">
+                                <div class="col-xs-6 text-center">
+                                  <a onClick={() => self.loadPosts(1, 'all', 'all')}><h3>{STRINGS.goBack}</h3></a>
+                                </div>
+                                <div class="col-xs-6 text-center">
+                                  <a href={"https://steemit.com/@"+config.steemUsername+"/"+post.permlink}>
+                                    <h3>{STRINGS.on} Steemit <img src="assets/steemit-black.png" class="steemit-icon-small"></img></h3>
+                                  </a>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         :
