@@ -1,7 +1,7 @@
 {
-  "name": "BKCBlog",
+  "name": "SteemitBlog",
   "repository": "augustolemble.com",
-  "description": "BKCBlog App using steem blockchain.",
+  "description": "SteemitBlog App using steem blockchain.",
   "authors": "Augusto Lemble <me@augustolemble.com>",
   "version": "0.0.2",
   "main": "webpack-prod.config.js",

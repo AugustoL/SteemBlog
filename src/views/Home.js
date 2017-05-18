@@ -182,7 +182,10 @@ export default class Home extends React.Component {
               <div class="row">
                 <div class="col-xs-12 col-sm-9">
                   <div class="row post whiteBox titlebox">
-                    <h1><a  class="titleLink" onClick={() => self.loadPosts(1, 'all', 'all')}>{config.blogTitle || ""}</a>
+                    <h1>
+                      <a  class="titleLink" onClick={() => self.loadPosts(1, 'all', 'all')}>
+                        {config.blogTitle}
+                      </a>
                       <a href={"https://steemit.com/@"+config.steemUsername} target="_blank" class="fa iconTitle pull-right">
                         <img src="assets/steemit-black.png" class="steemit-icon-big"></img>
                       </a>
