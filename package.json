@@ -36,6 +36,7 @@
     "react-select": "^1.0.0-rc.2",
     "react-social": "^1.6.1",
     "showdown": "^1.6.4",
+    "showdown-youtube": "^1.2.1",
     "steem": "^0.5.5",
     "url-loader": "^0.5.7",
     "webpack": "^2.4.1",

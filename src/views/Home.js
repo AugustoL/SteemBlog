@@ -14,7 +14,9 @@ var TwitterButton = ReactSocial.TwitterButton;
 const languages = require('../languages.json');
 const config = require('../config.json');
 var showdown  = require('showdown');
-var converter = new showdown.Converter();
+showdown.setFlavor('github');
+require('showdown-youtube');
+var converter = new showdown.Converter({extensions: ['youtube']});
 
 export default class Home extends React.Component {
 
