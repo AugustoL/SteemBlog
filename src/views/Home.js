@@ -97,7 +97,7 @@ export default class Home extends React.Component {
               })
             })).then(function(posts){
 
-              posts = _.filter(posts, function(o) { return o.category != 'test'; });
+              posts = _.filter(posts, function(o) { return o.category != 'test'; }).reverse();
 
               var months = [];
               var categories = [];
