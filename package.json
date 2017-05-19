@@ -1,7 +1,7 @@
 {
   "name": "SteemitBlog",
-  "repository": "augustolemble.com",
-  "description": "SteemitBlog App using steem blockchain.",
+  "repository": "https://github.com/AugustoL/SteemitBlog",
+  "description": "SteemitBlog App using the steem blockchain.",
   "authors": "Augusto Lemble <me@augustolemble.com>",
   "version": "0.0.3",
   "main": "webpack-prod.config.js",
@@ -23,27 +23,21 @@
     "file-loader": "^0.8.5",
     "flux": "^2.1.1",
     "font-awesome": "^4.7.0",
-    "font-awesome-webpack": "0.0.4",
     "history": "^1.17.0",
-    "jquery": "^2.2.0",
-    "less": "^2.7.1",
     "lodash": "^4.16.2",
     "moment": "^2.13.0",
     "raw-loader": "^0.5.1",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "react-router": "^1.0.3",
-    "react-select": "^1.0.0-rc.2",
     "react-social": "^1.6.1",
     "showdown": "^1.6.4",
     "showdown-youtube": "^1.2.1",
     "steem": "^0.5.5",
+    "style-loader": "^0.17.0",
     "url-loader": "^0.5.7",
     "webpack": "^2.4.1",
     "webpack-dev-server": "^2.4.2",
     "webpack-watch-livereload-plugin": "0.0.1"
-  },
-  "devDependencies": {
-    "html-webpack-plugin": "^2.24.0"
   }
 }

@@ -15,7 +15,6 @@ var appConfig = require('./config.json');
 //CSS
 
 require('../node_modules/bootstrap/dist/css/bootstrap.css');
-require('../node_modules/react-select/dist/react-select.css');
 require('../node_modules/font-awesome/css/font-awesome.css');
 require('url');
 require('./css/all.css');
