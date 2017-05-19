@@ -58,7 +58,6 @@ export default class Home extends React.Component {
       });
 
       self.loadData().then(function([allPosts, categories, months]){
-        console.log(allPosts, categories, months);
         self.setState({allPosts: allPosts, months: months, categories: categories, strings: languages[Store.lang]});
         if (self.state.postID.length > 0)
           self.loadPost(self.state.postID);
@@ -70,7 +69,7 @@ export default class Home extends React.Component {
 
     loadData(){
       var postsPermLinks = [];
-      var postsData = [];
+      var posts = [];
       var categories = [];
       return new Promise(function(resolve, reject){
         steem.api.getAccounts([config.steemUsername], function(err, accounts) {
@@ -78,51 +77,45 @@ export default class Home extends React.Component {
           console.log('Account',config.steemUsername,'data:',accounts[0]);
           console.log('Account',config.steemUsername,'profile:', JSON.parse(accounts[0].json_metadata));
 
-          steem.api.getAccountHistory(config.steemUsername, 200, 100, function(err, history) {
+          steem.api.getAccountHistory(config.steemUsername, 1000, 500, function(err, history) {
             console.log('Account',config.steemUsername,'history:',history);
             for (var i = 0; i < history.length; i++) {
               if ((history[i][1].op[0] == 'comment') && (history[i][1].op[1].parent_author == "") && (history[i][1].op[1].author == config.steemUsername))
-                if (postsPermLinks.indexOf(history[i][1].op[1].permlink) < 0)
-                  postsPermLinks.push(history[i][1].op[1].permlink);
+                if ( _.findIndex(posts, {permlink: history[i][1].op[1].permlink }) < 0){
+                  // console.log(history[i][1].op[1].permlink, JSON.parse(history[i][1].op[1].json_metadata), history[i][1].timestamp)
+                  posts.push({
+                    permlink: history[i][1].op[1].permlink,
+                    categories: JSON.parse(history[i][1].op[1].json_metadata).tags,
+                    created: history[i][1].timestamp
+                  })
+                }
             }
-            console.log('Account post permlinks',postsPermLinks);
+            console.log('All account posts',posts);
 
-            // Get all posts
-            Promise.all(postsPermLinks.map( function(permLink, index){
-              return new Promise(function(resolvePost, rejectPost){
-                steem.api.getContent(config.steemUsername, permLink, function(err, post) {
-                  if (err)
-                    rejectPost(err);
-                  else
-                    resolvePost(post);
-                });
-              })
-            })).then(function(posts){
+            // Remove tests posts and reverse array to order by date
+            posts = _.filter(posts, function(o) { return o.categories.indexOf('test') < 0; }).reverse();
 
-              posts = _.filter(posts, function(o) { return o.category != 'test'; }).reverse();
-
-              var months = [];
-              var categories = [];
-              for (var i = 0; i < posts.length; i++) {
-                if (!_.find(categories, {name : posts[i].category}))
-                  categories.push({name: posts[i].category, quantity: 1});
+            // Get all categories
+            var categories = [];
+            for (var i = 0; i < posts.length; i++)
+              for (var z = 0; z < posts[i].categories.length; z++)
+                if (!_.find(categories, {name : posts[i].categories[z]}))
+                  categories.push({name: posts[i].categories[z], quantity: 1});
                 else
-                  _.find(categories, {name : posts[i].category}).quantity ++;
-              }
+                  _.find(categories, {name : posts[i].categories[z]}).quantity ++;
 
-              for (var i = 0; i < posts.length; i++) {
-                var month = new Date(posts[i].created).getMonth()+1;
-                var year = new Date(posts[i].created).getFullYear();
-                if (!_.find(months, {month : month, year: year}))
-                  months.push({month : month, year: year, quantity: 1});
-                else
-                  _.find(months, {month : month, year: year}).quantity ++;
-              }
+            // Get all months
+            var months = [];
+            for (var i = 0; i < posts.length; i++) {
+              var month = new Date(posts[i].created).getMonth()+1;
+              var year = new Date(posts[i].created).getFullYear();
+              if (!_.find(months, {month : month, year: year}))
+                months.push({month : month, year: year, quantity: 1});
+              else
+                _.find(months, {month : month, year: year}).quantity ++;
+            }
 
-              resolve([posts, categories, months]);
-            }).catch(function(err){
-              reject(err)
-            })
+            resolve([posts, categories, months]);
 
           });
         });
@@ -130,24 +123,32 @@ export default class Home extends React.Component {
     }
 
     loadPost(id){
+      var self = this;
       window.location.hash = '#/?id='+id;
       var posts = this.state.allPosts;
-      posts = _.filter(posts, function(o) { return o.permlink == id; });
-      console.log(posts);
-      this.setState({postID: id, page: 1, category: 'all', month: 'all', posts: posts, loading: false});
+      steem.api.getContent(config.steemUsername, id, function(err, post) {
+        if (err)
+          rejectPost(err);
+        else
+          self.setState({postID: id, page: 1, category: 'all', month: 'all', posts: [post], loading: false});
+      });
     }
 
     loadPosts(page, category, month){
+      var self = this;
+
       if (page > 1 || category != 'all' || month != 'all')
         window.location.hash = '#/?page='+page+'&category='+category+'&month='+month;
       else
         window.location.hash = '#/';
-      console.log(page, category, month);
-      var posts = this.state.allPosts;
 
+      var posts = self.state.allPosts;
+
+      // Filter by category
       if (category != 'all')
-        posts = _.filter(posts, function(o) { return o.category == category; });
+        posts = _.filter(posts, function(o) { return o.categories.indexOf(category) > -1 });
 
+      // Filer by month
       if (month != 'all')
         posts = _.filter(posts, function(o) {
           return (new Date(o.created).getMonth()+1 == month.split('/')[1]) && (new Date(o.created).getFullYear() == month.split('/')[0])
@@ -155,7 +156,22 @@ export default class Home extends React.Component {
 
       posts = posts.slice( (page-1)*10, (page)*10);
 
-      this.setState({postID: '', page: page, category: category, month: month, posts: posts, loading: false});
+      // Get all posts content
+      Promise.all(posts.map( function(post, index){
+        return new Promise(function(resolvePost, rejectPost){
+          steem.api.getContent(config.steemUsername, post.permlink, function(err, post) {
+            if (err)
+              rejectPost(err);
+            else
+              resolvePost(post);
+          });
+        })
+      })).then(function(posts){
+        self.setState({postID: '', page: page, category: category, month: month, posts: posts, loading: false});
+      }).catch(function(err){
+        console.error(err);
+      });
+
     }
 
     changeLanguage(lang){
