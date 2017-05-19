@@ -214,7 +214,7 @@ export default class Home extends React.Component {
                             <div class="col-xs-12 text-center margin-top">
                               <TwitterButton title="Share via Twitter"
                                 message={post.title}
-                                url={'http://augustolemble.com/?id='+post.permlink} element="a" className=""
+                                url={'/?id='+post.permlink} element="a" className=""
                               >
                                 Share <span className="fa fa-twitter"/>
                               </TwitterButton>

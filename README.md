@@ -7,10 +7,11 @@
 `npm install`
 
 
-## Config file
+## Config
 
-The blog title, social media urls and username in steemit.
+Edit the config file with the blog title, social media urls and username in steemit.
 
+Example:
 ```
 {
   "steemUsername": "augustol",
@@ -22,6 +23,8 @@ The blog title, social media urls and username in steemit.
   "contactEmail": "me@augustolemble.com",
 }
 ```
+
+Edit the index.html file on src folder with teh correct values on header tag.
 
 ## Develop
 
