@@ -272,8 +272,8 @@ export default class Home extends React.Component {
                         :
                           <div>
                             <div class="col-xs-12">
-                              {post.body.length > 200 ?
-                                <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body.substring(0,200))}} ></h4>
+                              {post.body.length > 250 ?
+                                <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body.substring(0,250)+' ...')}} ></h4>
                               :
                                 <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body)}} ></h4>
                               }
