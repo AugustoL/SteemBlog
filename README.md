@@ -1,26 +1,24 @@
-# BKCBlog
+# SteemitBlog
 
 ## Install
 
-`git clone https://github.com/AugustoL/BKCBlog`
+`git clone https://github.com/AugustoL/SteemitBlog`
 
 `npm install`
 
-
 ## Config
 
-Edit the config file with the blog title, social media urls and username in steemit.
+Edit the config file with the blog title, social media urls and username in steemit inside the src folder.
 
 Example:
 ```
 {
   "steemUsername": "augustol",
-  "blogTitle": "AugustoLemble BKCBlog",
+  "blogTitle": "AugustoLemble SteemitBlog",
   "facebookLink": "https://fb.com/augusto8",
   "twitterLink": "https://twitter.com/LembleAugusto",
   "linkedinLink": "https://ar.linkedin.com/in/augustolemble",
-  "githubLink": "https://github.com/AugustoL",
-  "contactEmail": "me@augustolemble.com",
+  "githubLink": "https://github.com/AugustoL"
 }
 ```
 
