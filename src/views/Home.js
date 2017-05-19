@@ -129,9 +129,26 @@ export default class Home extends React.Component {
       steem.api.getContent(config.steemUsername, id, function(err, post) {
         if (err)
           rejectPost(err);
-        else
+        else{
+          post.body = self.convertVideos(post.body);
           self.setState({postID: id, page: 1, category: 'all', month: 'all', posts: [post], loading: false});
+        }
       });
+    }
+
+    // Function to convert video and youtube links to video player
+    convertVideos(html){
+      var pattern1 = /(?:http?s?:\/\/)?(?:www\.)?(?:vimeo\.com)\/?(.+)/g;
+      var pattern2 = /(?:http?s?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/g;
+      if (pattern1.test(html)) {
+        var replacement = '<div class="row text-center"><iframe width="420" height="345" src="//player.vimeo.com/video/$1" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe></div>';
+        var html = html.replace(pattern1, replacement);
+      }
+      if (pattern2.test(html)) {
+        var replacement = '<div class="row text-center"><iframe width="420" height="345" src="http://www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe></div>';
+        var html = html.replace(pattern2, replacement);
+      }
+      return html;
     }
 
     loadPosts(page, category, month){
@@ -167,6 +184,12 @@ export default class Home extends React.Component {
           });
         })
       })).then(function(posts){
+
+        // Convert video in all posts
+        posts.map(function(post, i){
+          post.body = self.convertVideos(post.body);;
+        })
+
         self.setState({postID: '', page: page, category: category, month: month, posts: posts, loading: false});
       }).catch(function(err){
         console.error(err);
