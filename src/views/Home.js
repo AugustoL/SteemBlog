@@ -68,6 +68,7 @@ export default class Home extends React.Component {
     }
 
     loadData(){
+      var self = this;
       var postsPermLinks = [];
       var posts = [];
       var categories = [];
@@ -82,18 +83,23 @@ export default class Home extends React.Component {
             for (var i = 0; i < history.length; i++) {
               if ((history[i][1].op[0] == 'comment') && (history[i][1].op[1].parent_author == "") && (history[i][1].op[1].author == config.steemUsername))
                 if ( _.findIndex(posts, {permlink: history[i][1].op[1].permlink }) < 0){
-                  // console.log(history[i][1].op[1].permlink, JSON.parse(history[i][1].op[1].json_metadata), history[i][1].timestamp)
+                  var cats = JSON.parse(history[i][1].op[1].json_metadata).tags;
+                  // Capitalize first letter
+                  cats.forEach(function(tag, i){
+                    cats[i] = tag.charAt(0).toUpperCase() + tag.slice(1);;
+                  });
                   posts.push({
                     permlink: history[i][1].op[1].permlink,
-                    categories: JSON.parse(history[i][1].op[1].json_metadata).tags,
+                    categories: cats,
                     created: history[i][1].timestamp
                   })
                 }
             }
-            console.log('All account posts',posts);
-
+            
             // Remove tests posts and reverse array to order by date
-            posts = _.filter(posts, function(o) { return o.categories.indexOf('test') < 0; }).reverse();
+            posts = _.filter(posts, function(o) { return o.categories.indexOf('Test') < 0; }).reverse();
+
+            console.log('All account posts',posts);
 
             // Get all categories
             var categories = [];
