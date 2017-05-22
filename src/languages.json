@@ -50,7 +50,8 @@
 		"yes": "Yes",
 		"no": "No",
 		"reload": "Reload",
-		"on": "On"
+		"on": "On",
+    "about": "About"
 	},
 	"es": {
 		"loading": "Cargando",
@@ -103,6 +104,7 @@
 		"yes": "Si",
 		"no": "No",
 		"reload": "Recargar",
-		"on": "En"
+		"on": "En",
+    "about": "Sobre mi"
 	}
 }

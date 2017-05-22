@@ -10,6 +10,7 @@ import Loader from "../components/Loader";
 import ReactSocial from "react-social";
 
 var TwitterButton = ReactSocial.TwitterButton;
+var FacebookButton = ReactSocial.FacebookButton;
 
 const languages = require('../languages.json');
 const config = require('../config.json');
@@ -46,6 +47,7 @@ export default class Home extends React.Component {
         months: [],
         categories: [],
         nodeInfo: {},
+        profile: {},
         strings: languages[Store.lang]
       }
     }
@@ -57,8 +59,8 @@ export default class Home extends React.Component {
         self.setState({strings: languages[Store.lang]});
       });
 
-      self.loadData().then(function([allPosts, categories, months]){
-        self.setState({allPosts: allPosts, months: months, categories: categories, strings: languages[Store.lang]});
+      self.loadData().then(function([allPosts, categories, months, profile]){
+        self.setState({allPosts: allPosts, months: months, categories: categories, profile: profile, strings: languages[Store.lang]});
         if (self.state.postID.length > 0)
           self.loadPost(self.state.postID);
         else
@@ -73,15 +75,37 @@ export default class Home extends React.Component {
       var posts = [];
       var categories = [];
       return new Promise(function(resolve, reject){
-        steem.api.getAccounts([config.steemUsername], function(err, accounts) {
+        steem.api.getAccounts([config.steem.username], function(err, accounts) {
+          var profile = {};
+          console.log('Account',config.steem.username,'data:',accounts[0]);
+          console.log('Account',config.steem.username,'profile:', JSON.parse(accounts[0].json_metadata));
+          profile = JSON.parse(accounts[0].json_metadata).profile;
 
-          console.log('Account',config.steemUsername,'data:',accounts[0]);
-          console.log('Account',config.steemUsername,'profile:', JSON.parse(accounts[0].json_metadata));
+          steem.api.getDynamicGlobalProperties(function(err, result) {
+            console.log('Chain', result);
+          });
 
-          steem.api.getAccountHistory(config.steemUsername, 1000, 500, function(err, history) {
-            console.log('Account',config.steemUsername,'history:',history);
+          steem.api.getAccountReferences(149361 ,function(err, result) {
+            console.log('Refs', result);
+          });
+
+          function getHistory(from, limit){
+            console.log('Getting posts from',from,', limit',limit);
+            return new Promise(function(resolveHistory, rejectHistory){
+              steem.api.getAccountHistory(config.steem.username, from, limit, function(err, history) {
+                if (err)
+                  rejectHistory(err);
+                else{
+                  resolveHistory(history);
+                }
+              })
+            });
+          }
+
+          getHistory(config.steem.fromPost, 10000).then(function(history){
+            console.log('Account',config.steem.username,'history:',history);
             for (var i = 0; i < history.length; i++) {
-              if ((history[i][1].op[0] == 'comment') && (history[i][1].op[1].parent_author == "") && (history[i][1].op[1].author == config.steemUsername))
+              if ((history[i][1].op[0] == 'comment') && (history[i][1].op[1].parent_author == "") && (history[i][1].op[1].author == config.steem.username))
                 if ( _.findIndex(posts, {permlink: history[i][1].op[1].permlink }) < 0){
                   var cats = JSON.parse(history[i][1].op[1].json_metadata).tags;
                   // Capitalize first letter
@@ -95,7 +119,7 @@ export default class Home extends React.Component {
                   })
                 }
             }
-            
+
             // Remove tests posts and reverse array to order by date
             posts = _.filter(posts, function(o) { return o.categories.indexOf('Test') < 0; }).reverse();
 
@@ -121,7 +145,7 @@ export default class Home extends React.Component {
                 _.find(months, {month : month, year: year}).quantity ++;
             }
 
-            resolve([posts, categories, months]);
+            resolve([posts, categories, months, profile]);
 
           });
         });
@@ -132,7 +156,7 @@ export default class Home extends React.Component {
       var self = this;
       window.location.hash = '#/?id='+id;
       var posts = this.state.allPosts;
-      steem.api.getContent(config.steemUsername, id, function(err, post) {
+      steem.api.getContent(config.steem.username, id, function(err, post) {
         if (err)
           rejectPost(err);
         else{
@@ -182,7 +206,7 @@ export default class Home extends React.Component {
       // Get all posts content
       Promise.all(posts.map( function(post, index){
         return new Promise(function(resolvePost, rejectPost){
-          steem.api.getContent(config.steemUsername, post.permlink, function(err, post) {
+          steem.api.getContent(config.steem.username, post.permlink, function(err, post) {
             if (err)
               rejectPost(err);
             else
@@ -195,7 +219,7 @@ export default class Home extends React.Component {
         posts.map(function(post, i){
           post.body = self.convertVideos(post.body);;
         })
-
+        console.log('Posts to show:', posts);
         self.setState({postID: '', page: page, category: category, month: month, posts: posts, loading: false});
       }).catch(function(err){
         console.error(err);
@@ -233,7 +257,7 @@ export default class Home extends React.Component {
                       <a  class="titleLink" onClick={() => self.loadPosts(1, 'all', 'all')}>
                         {config.blogTitle}
                       </a>
-                      <a href={"https://steemit.com/@"+config.steemUsername} target="_blank" class="fa iconTitle pull-right">
+                      <a href={"https://steemit.com/@"+config.steem.username} target="_blank" class="fa iconTitle pull-right">
                         <img src="assets/steemit-black.png" class="steemit-icon-big"></img>
                       </a>
                       { config.facebookLink ? <a href={config.facebookLink} target="_blank" class="fa fa-facebook iconTitle pull-right"></a> : <a/>}
@@ -256,22 +280,36 @@ export default class Home extends React.Component {
                         { self.state.postID.length > 0 ?
                           <div>
                             <div class="col-xs-12 bodyPost" dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body)}} ></div>
-                            <div class="col-xs-12 text-center margin-top">
+                            <div class="col-xs-6 text-center margin-top">
                               <TwitterButton title="Share via Twitter"
                                 message={post.title}
                                 url={'/?id='+post.permlink} element="a" className=""
                               >
                                 Share <span className="fa fa-twitter"/>
                               </TwitterButton>
-                              <div class="row">
-                                <div class="col-xs-6 text-center">
-                                  <a onClick={() => self.loadPosts(1, 'all', 'all')}><h3>{STRINGS.goBack}</h3></a>
-                                </div>
-                                <div class="col-xs-6 text-center">
-                                  <a href={"https://steemit.com/@"+config.steemUsername+"/"+post.permlink}>
-                                    <h3>{STRINGS.on} Steemit <img src="assets/steemit-black.png" class="steemit-icon-small"></img></h3>
-                                  </a>
-                                </div>
+                            </div>
+                            <div class="col-xs-6 text-center margin-top">
+                              <FacebookButton title="Share via Facebook"
+                                message={post.title}
+                                url={'/?id='+post.permlink} element="a" className=""
+                              >
+                                Share <span className="fa fa-facebook"/>
+                              </FacebookButton>
+                            </div>
+                            <div class="row">
+                              <div class="col-xs-3 text-center">
+                                <a onClick={() => self.loadPosts(1, 'all', 'all')}><h3><span class="fa fa-arrow-left"></span> {STRINGS.goBack}</h3></a>
+                              </div>
+                              <div class="col-xs-3 text-center">
+                                <h3>{post.net_votes} <span class="fa fa-thumbs-up"></span></h3>
+                              </div>
+                              <div class="col-xs-3 text-center">
+                                <h3>{post.children} <span class="fa fa-comments"></span></h3>
+                              </div>
+                              <div class="col-xs-3 text-center">
+                                <a href={"https://steemit.com/@"+config.steem.username+"/"+post.permlink}>
+                                  <h3>{STRINGS.on} Steemit <img src="assets/steemit-black.png" class="steemit-icon-small"></img></h3>
+                                </a>
                               </div>
                             </div>
                           </div>
@@ -284,8 +322,14 @@ export default class Home extends React.Component {
                                 <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body)}} ></h4>
                               }
                             </div>
-                            <div class="col-xs-12 text-center">
-                              <a onClick={() => self.loadPost(post.permlink)}><h3 class="no-margin margin-bottom">{STRINGS.viewPost}</h3></a>
+                            <div class="col-xs-4 text-center">
+                              <h3>{post.net_votes} <span class="fa fa-thumbs-up"></span></h3>
+                            </div>
+                            <div class="col-xs-4 text-center">
+                              <h3>{post.children} <span class="fa fa-comments"></span></h3>
+                            </div>
+                            <div class="col-xs-4 text-center">
+                              <a onClick={() => self.loadPost(post.permlink)}><h3>{STRINGS.viewPost}</h3></a>
                             </div>
                           </div>
                         }
@@ -317,7 +361,11 @@ export default class Home extends React.Component {
                   : <div></div>}
                 </div>
                 <div class="hidden-xs col-sm-3">
-
+                  <div class="whiteBox margin-top text-center">
+                    <h3 class="no-margin margin-bottom">{STRINGS.about}</h3>
+                    <h4>{self.state.profile.about}</h4>
+                    <h4>{self.state.allPosts.length} Posts</h4>
+                  </div>
                   <div class="whiteBox margin-top text-center">
                     <h3 class="no-margin margin-bottom">{STRINGS.languages}</h3>
                     <h4><a onClick={()=>self.changeLanguage('es')}>{STRINGS.spanish}</a></h4>

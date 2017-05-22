@@ -13,12 +13,15 @@ Edit the config file with the blog title, social media urls and username in stee
 Example:
 ```
 {
-  "steemUsername": "augustol",
-  "blogTitle": "AugustoLemble SteemitBlog",
+  "blogTitle": "AugustoL SteemitBlog",
   "facebookLink": "https://fb.com/augusto8",
   "twitterLink": "https://twitter.com/LembleAugusto",
   "linkedinLink": "https://ar.linkedin.com/in/augustolemble",
-  "githubLink": "https://github.com/AugustoL"
+  "githubLink": "https://github.com/AugustoL",
+  "steem": {
+    "username": "augustol",
+    "fromPost": 10000
+  }
 }
 ```
 
