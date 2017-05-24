@@ -85,10 +85,6 @@ export default class Home extends React.Component {
             console.log('Chain', result);
           });
 
-          steem.api.getAccountReferences(149361 ,function(err, result) {
-            console.log('Refs', result);
-          });
-
           function getHistory(from, limit){
             console.log('Getting posts from',from,', limit',limit);
             return new Promise(function(resolveHistory, rejectHistory){
