@@ -282,21 +282,13 @@ export default class Home extends React.Component {
                         { self.state.postID.length > 0 ?
                           <div>
                             <div class="col-xs-12 bodyPost" dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body)}} ></div>
-                            <div class="col-xs-6 text-center margin-top">
+                            <div class="col-xs-12 text-center margin-top">
                               <TwitterButton title="Share via Twitter"
                                 message={post.title}
                                 url={'/?id='+post.permlink} element="a" className=""
                               >
                                 Share <span className="fa fa-twitter"/>
                               </TwitterButton>
-                            </div>
-                            <div class="col-xs-6 text-center margin-top">
-                              <FacebookButton title="Share via Facebook"
-                                message={post.title}
-                                url={'/?id='+post.permlink} element="a" className=""
-                              >
-                                Share <span className="fa fa-facebook"/>
-                              </FacebookButton>
                             </div>
                             <div class="row">
                               <div class="col-xs-3 text-center">
