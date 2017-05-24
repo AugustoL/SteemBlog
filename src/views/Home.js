@@ -134,6 +134,8 @@ export default class Home extends React.Component {
                 else
                   _.find(categories, {name : posts[i].categories[z]}).quantity ++;
 
+            categories = _.orderBy(categories, ['quantity', 'name'] , ['desc', 'asc']);
+
             // Get all months
             var months = [];
             for (var i = 0; i < posts.length; i++) {
