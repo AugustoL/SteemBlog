@@ -33,7 +33,7 @@
     "react-social": "^1.6.1",
     "showdown": "^1.6.4",
     "showdown-youtube": "^1.2.1",
-    "steem": "^0.5.5",
+    "steem": "^0.5.8",
     "style-loader": "^0.17.0",
     "url-loader": "^0.5.7",
     "webpack": "^2.4.1",
