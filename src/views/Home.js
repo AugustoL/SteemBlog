@@ -15,6 +15,7 @@ var FacebookButton = ReactSocial.FacebookButton;
 
 const languages = require('../languages.json');
 const config = require('../config.json');
+
 var showdown  = require('showdown');
 showdown.setFlavor('github');
 require('showdown-youtube');
@@ -82,9 +83,9 @@ export default class Home extends React.Component {
           console.log('Account',config.steem.username,'profile:', JSON.parse(accounts[0].json_metadata));
           profile = JSON.parse(accounts[0].json_metadata).profile;
 
-          steem.api.getDynamicGlobalProperties(function(err, result) {
-            console.log('Chain', result);
-          });
+          // steem.api.getDynamicGlobalProperties(function(err, result) {
+          //   console.log('Chain', result);
+          // });
 
           function getHistory(from, limit){
             console.log('Getting posts from',from,', limit',limit);
@@ -254,161 +255,186 @@ export default class Home extends React.Component {
     render() {
       var self = this;
       const STRINGS = this.state.strings;
-      return(
-        <div>
-          { self.state.loading ?
-            <div class="container">
-              <div class="row text-center">
-                <div class="col-xs-3"/>
-                <div class="col-xs-6 whiteBox">
-                  <Loader message={STRINGS.loading}/>
+
+      const loader =
+        <div class="container">
+          <div class="row text-center">
+            <div class="col-xs-3"/>
+            <div class="col-xs-6 whiteBox">
+              <Loader message={STRINGS.loading}/>
+            </div>
+          </div>
+        </div>;
+
+      const header =
+        <div class="row post whiteBox titlebox">
+          <h1>
+            <a  class="titleLink" onClick={() => self.loadPosts(1, 'all', 'all')}>
+              {config.blogTitle}
+            </a>
+            <a href={"https://steemit.com/@"+config.steem.username} target="_blank" class="fa iconTitle pull-right">
+              <img src="assets/steemit-black.png" class="steemit-icon-big"></img>
+            </a>
+            { config.facebookLink ? <a href={config.facebookLink} target="_blank" class="fa fa-facebook iconTitle pull-right"></a> : <a/>}
+            { config.twitterLink ? <a href={config.twitterLink} target="_blank" class="fa fa-twitter iconTitle pull-right"></a> : <a/>}
+            { config.linkedinLink ? <a href={config.linkedinLink} target="_blank" class="fa fa-linkedin iconTitle pull-right"></a> : <a/>}
+            { config.githubLink ? <a href={config.githubLink} target="_blank" class="fa fa-github iconTitle pull-right"></a> : <a/>}
+          </h1>
+        </div>;
+
+      const sidebar =
+        <div class="hidden-xs col-sm-3">
+          <div class="whiteBox margin-top text-center">
+            <h3 class="no-margin margin-bottom">{STRINGS.about}</h3>
+            <h4>{self.state.profile.about}</h4>
+            <h4>{self.state.allPosts.length} Posts</h4>
+          </div>
+          <div class="whiteBox margin-top text-center">
+            <h3 class="no-margin margin-bottom">{STRINGS.languages}</h3>
+            <h4><a onClick={()=>self.changeLanguage('es')}>{STRINGS.spanish}</a></h4>
+            <h4><a onClick={()=>self.changeLanguage('en')}>{STRINGS.english}</a></h4>
+          </div>
+          <div class="whiteBox margin-top text-center">
+            <h3 class="no-margin margin-bottom">{STRINGS.categories}</h3>
+            {self.state.categories.map( function(cat, index){
+              return(<h4 key={index}><a onClick={() => self.loadPosts(1, cat.name, 'all')}>{cat.name} ({cat.quantity})</a></h4>)
+            })}
+          </div>
+          <div class="whiteBox margin-top text-center">
+            <h3 class="no-margin margin-bottom">{STRINGS.archives}</h3>
+            {self.state.months.map( function(month, index){
+              return(<h4 key={index}><a onClick={() => self.loadPosts(1, 'all', month.year+'/'+month.month)}>{month.year} / {month.month} ({month.quantity})</a></h4>)
+            })}
+          </div>
+        </div>;
+
+      const paginator =
+        <nav>
+          <ul class="pager text-center">
+            {self.state.page > 1 ?
+              <li class="pull-left">
+                <a onClick={ ()=> self.loadPosts(self.state.page-1, self.state.category, self.state.month)}>
+                  {STRINGS.previous}
+                </a>
+              </li>
+            : <li/>
+            }
+            <li class="text-center"><a href="#">{STRINGS.page} {self.state.page}</a></li>
+            { (self.state.posts.length == 10) ?
+              <li class="pull-right">
+                <a onClick={ ()=> self.loadPosts(self.state.page+1, self.state.category, self.state.month)}>
+                  {STRINGS.next}
+                </a>
+              </li>
+              : <li/>
+            }
+          </ul>
+        </nav>;
+
+      function renderPostLong(post){
+        return (
+          <div key='singlePost'>
+            <div class="row post whiteBox" >
+              <div class="col-xs-12">
+                <h2>{post.title}</h2>
+                <h4>{STRINGS.posted} {post.created} {STRINGS.in} {post.category}</h4>
+              </div>
+              <div class="col-xs-12 bodyPost" dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body)}} ></div>
+              <div class="col-xs-12 text-center margin-top">
+                <TwitterButton title="Share via Twitter"
+                  message={post.title}
+                  url={'/?id='+post.permlink} element="a" className=""
+                >
+                  Share <span className="fa fa-twitter"/>
+                </TwitterButton>
+              </div>
+              <div class="row">
+                <div class="col-xs-3 text-center">
+                  <a onClick={() => self.loadPosts(1, 'all', 'all')}><h3><span class="fa fa-arrow-left"></span> {STRINGS.goBack}</h3></a>
+                </div>
+                <div class="col-xs-3 text-center">
+                  <h3>{post.net_votes} <span class="fa fa-thumbs-up"></span></h3>
+                </div>
+                <div class="col-xs-3 text-center">
+                  <h3>{post.children} <span class="fa fa-comments"></span></h3>
+                </div>
+                <div class="col-xs-3 text-center">
+                  <a href={"https://steemit.com/@"+config.steem.username+"/"+post.permlink}>
+                    <h3>{STRINGS.on} Steemit <img src="assets/steemit-black.png" class="steemit-icon-small"></img></h3>
+                  </a>
                 </div>
               </div>
             </div>
+            {post.comments.map( function(comment, index){
+              return (
+                <div class="row comment whiteBox" key={'comment'+index} >
+                  <div class="col-xs-12">
+                    <strong>@{comment.author}</strong> - {moment(comment.time).format('MMMM Do YYYY, h:mm:ss a')}
+                    <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(comment.body)}} ></h4>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      }
+
+      function renderPostShort(post, index){
+        return (
+          <div key={'post'+index}>
+            <div class="row post whiteBox" >
+              <div class="col-xs-12">
+                <h2>{post.title}</h2>
+                <h4>{STRINGS.posted} {post.created} {STRINGS.in} {post.category}</h4>
+              </div>
+              <div class="col-xs-12">
+                {post.body.length > 250 ?
+                  <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body.substring(0,250)+' ...')}} ></h4>
+                :
+                  <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body)}} ></h4>
+                }
+              </div>
+              <div class="col-xs-4 text-center">
+                <h3>{post.net_votes} <span class="fa fa-thumbs-up"></span></h3>
+              </div>
+              <div class="col-xs-4 text-center">
+                <h3>{post.children} <span class="fa fa-comments"></span></h3>
+              </div>
+              <div class="col-xs-4 text-center">
+                <a onClick={() => self.loadPost(post.permlink)}><h3>{STRINGS.viewPost}</h3></a>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      return(
+        <div>
+          { self.state.loading ?
+            <div>{loader}</div>
           :
             <div class="container">
               <div class="row">
                 <div class="col-xs-12 col-sm-9">
-                  <div class="row post whiteBox titlebox">
-                    <h1>
-                      <a  class="titleLink" onClick={() => self.loadPosts(1, 'all', 'all')}>
-                        {config.blogTitle}
-                      </a>
-                      <a href={"https://steemit.com/@"+config.steem.username} target="_blank" class="fa iconTitle pull-right">
-                        <img src="assets/steemit-black.png" class="steemit-icon-big"></img>
-                      </a>
-                      { config.facebookLink ? <a href={config.facebookLink} target="_blank" class="fa fa-facebook iconTitle pull-right"></a> : <a/>}
-                      { config.twitterLink ? <a href={config.twitterLink} target="_blank" class="fa fa-twitter iconTitle pull-right"></a> : <a/>}
-                      { config.linkedinLink ? <a href={config.linkedinLink} target="_blank" class="fa fa-linkedin iconTitle pull-right"></a> : <a/>}
-                      { config.githubLink ? <a href={config.githubLink} target="_blank" class="fa fa-github iconTitle pull-right"></a> : <a/>}
-                    </h1>
-                  </div>
-                  {self.state.posts.length == 0 ?
+                  {header}
+                  { (self.state.posts.length == 0) ?
                     <div class="row post whiteBox text-center">
                       {STRINGS.noPosts}
                     </div>
-                  : self.state.posts.map( function(post, index){
-                    return(
-                      <div key={'post'+index}>
-
-                      <div class="row post whiteBox" >
-                        <div class="col-xs-12">
-                          <h2>{post.title}</h2>
-                          <h4>{STRINGS.posted} {post.created} {STRINGS.in} {post.category}</h4>
-                        </div>
-                        { self.state.postID.length > 0 ?
-                          <div>
-                            <div class="col-xs-12 bodyPost" dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body)}} ></div>
-                            <div class="col-xs-12 text-center margin-top">
-                              <TwitterButton title="Share via Twitter"
-                                message={post.title}
-                                url={'/?id='+post.permlink} element="a" className=""
-                              >
-                                Share <span className="fa fa-twitter"/>
-                              </TwitterButton>
-                            </div>
-                            <div class="row">
-                              <div class="col-xs-3 text-center">
-                                <a onClick={() => self.loadPosts(1, 'all', 'all')}><h3><span class="fa fa-arrow-left"></span> {STRINGS.goBack}</h3></a>
-                              </div>
-                              <div class="col-xs-3 text-center">
-                                <h3>{post.net_votes} <span class="fa fa-thumbs-up"></span></h3>
-                              </div>
-                              <div class="col-xs-3 text-center">
-                                <h3>{post.children} <span class="fa fa-comments"></span></h3>
-                              </div>
-                              <div class="col-xs-3 text-center">
-                                <a href={"https://steemit.com/@"+config.steem.username+"/"+post.permlink}>
-                                  <h3>{STRINGS.on} Steemit <img src="assets/steemit-black.png" class="steemit-icon-small"></img></h3>
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        :
-                          <div>
-                            <div class="col-xs-12">
-                              {post.body.length > 250 ?
-                                <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body.substring(0,250)+' ...')}} ></h4>
-                              :
-                                <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body)}} ></h4>
-                              }
-                            </div>
-                            <div class="col-xs-4 text-center">
-                              <h3>{post.net_votes} <span class="fa fa-thumbs-up"></span></h3>
-                            </div>
-                            <div class="col-xs-4 text-center">
-                              <h3>{post.children} <span class="fa fa-comments"></span></h3>
-                            </div>
-                            <div class="col-xs-4 text-center">
-                              <a onClick={() => self.loadPost(post.permlink)}><h3>{STRINGS.viewPost}</h3></a>
-                            </div>
-                          </div>
-                        }
-                      </div>
-                      { self.state.postID.length > 0 ?
-                        post.comments.map( function(comment, index){
-                          return (
-                          <div class="row comment whiteBox" key={'comment'+index} >
-                            <div class="col-xs-12">
-                              <strong>@{comment.author}</strong> - {moment(comment.time).format('MMMM Do YYYY, h:mm:ss a')}
-                              <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(comment.body)}} ></h4>
-                            </div>
-                          </div>
-                          )
-                        })
-                      : <div></div> }
-
-                      </div>
-                    )
-                  })}
-                  { self.state.postID.length == 0 ?
-                    <nav>
-              				<ul class="pager text-center">
-              					{self.state.page > 1 ?
-                          <li class="pull-left">
-                            <a onClick={ ()=> self.loadPosts(self.state.page-1, self.state.category, self.state.month)}>
-                              {STRINGS.previous}
-                            </a>
-                          </li>
-                        : <li/>
-                        }
-              					<li class="text-center"><a href="#">{STRINGS.page} {self.state.page}</a></li>
-              					{ (self.state.posts.length == 10) ?
-                          <li class="pull-right">
-                            <a onClick={ ()=> self.loadPosts(self.state.page+1, self.state.category, self.state.month)}>
-                              {STRINGS.next}
-                            </a>
-                          </li>
-                          : <li/>
-                        }
-              				</ul>
-              			</nav>
-                  : <div></div>}
-                </div>
-                <div class="hidden-xs col-sm-3">
-                  <div class="whiteBox margin-top text-center">
-                    <h3 class="no-margin margin-bottom">{STRINGS.about}</h3>
-                    <h4>{self.state.profile.about}</h4>
-                    <h4>{self.state.allPosts.length} Posts</h4>
-                  </div>
-                  <div class="whiteBox margin-top text-center">
-                    <h3 class="no-margin margin-bottom">{STRINGS.languages}</h3>
-                    <h4><a onClick={()=>self.changeLanguage('es')}>{STRINGS.spanish}</a></h4>
-                    <h4><a onClick={()=>self.changeLanguage('en')}>{STRINGS.english}</a></h4>
-                  </div>
-                  <div class="whiteBox margin-top text-center">
-                    <h3 class="no-margin margin-bottom">{STRINGS.categories}</h3>
-                    {self.state.categories.map( function(cat, index){
-                      return(<h4 key={index}><a onClick={() => self.loadPosts(1, cat.name, 'all')}>{cat.name} ({cat.quantity})</a></h4>)
+                  : (self.state.postID.length > 0) ?
+                    self.state.posts.map( function(post, index){
+                      return renderPostLong(post);
+                    })
+                  :
+                  <div>
+                    {self.state.posts.map( function(post, index){
+                      return renderPostShort(post, index);
                     })}
+                    {paginator}
                   </div>
-                  <div class="whiteBox margin-top text-center">
-                    <h3 class="no-margin margin-bottom">{STRINGS.archives}</h3>
-                    {self.state.months.map( function(month, index){
-                      return(<h4 key={index}><a onClick={() => self.loadPosts(1, 'all', month.year+'/'+month.month)}>{month.year} / {month.month} ({month.quantity})</a></h4>)
-                    })}
-                  </div>
+                  }
                 </div>
+                {sidebar}
               </div>
             </div>
             }
