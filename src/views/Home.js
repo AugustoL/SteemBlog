@@ -2,6 +2,7 @@ import React from 'react';
 import {Link} from "react-router";
 
 import steem from 'steem';
+import moment from 'moment';
 import _ from 'lodash';
 
 import Dispatcher from "../Dispatcher";
@@ -101,8 +102,11 @@ export default class Home extends React.Component {
           getHistory(config.steem.fromPost, 10000).then(function(history){
             console.log('Account',config.steem.username,'history:',history);
             for (var i = 0; i < history.length; i++) {
-              if ((history[i][1].op[0] == 'comment') && (history[i][1].op[1].parent_author == "") && (history[i][1].op[1].author == config.steem.username))
-                if ( _.findIndex(posts, {permlink: history[i][1].op[1].permlink }) < 0){
+              if ((history[i][1].op[0] == 'comment')
+                && (history[i][1].op[1].parent_author == "")
+                && (history[i][1].op[1].author == config.steem.username)
+                && ( _.findIndex(posts, {permlink: history[i][1].op[1].permlink }) < 0)
+              ) {
                   var cats = JSON.parse(history[i][1].op[1].json_metadata).tags;
                   // Capitalize first letter
                   cats.forEach(function(tag, i){
@@ -111,9 +115,22 @@ export default class Home extends React.Component {
                   posts.push({
                     permlink: history[i][1].op[1].permlink,
                     categories: cats,
-                    created: history[i][1].timestamp
+                    created: history[i][1].timestamp,
+                    comments: []
                   })
                 }
+            }
+            for (var i = 0; i < history.length; i++) {
+              if ((history[i][1].op[0] == 'comment')
+                && (history[i][1].op[1].parent_author == config.steem.username)
+                && (history[i][1].op[1].author.length > 0)
+                && ( _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) > -1)
+              )
+                posts[ _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) ].comments.push({
+                  author: history[i][1].op[1].author,
+                  body: history[i][1].op[1].body,
+                  time: history[i][1].timestamp
+                });
             }
 
             // Remove tests posts and reverse array to order by date
@@ -159,6 +176,7 @@ export default class Home extends React.Component {
           rejectPost(err);
         else{
           post.body = self.convertVideos(post.body);
+          post = _.merge(posts[ _.findIndex(posts, {permlink: post.permlink }) ], post);
           self.setState({postID: id, page: 1, category: 'all', month: 'all', posts: [post], loading: false});
         }
       });
@@ -211,12 +229,13 @@ export default class Home extends React.Component {
               resolvePost(post);
           });
         })
-      })).then(function(posts){
+      })).then(function(postsContent){
 
         // Convert video in all posts
-        posts.map(function(post, i){
-          post.body = self.convertVideos(post.body);;
-        })
+        postsContent.map(function(post, i){
+          post.body = self.convertVideos(post.body);
+          post = _.merge(posts[i], post);
+        });
         console.log('Posts to show:', posts);
         self.setState({postID: '', page: page, category: category, month: month, posts: posts, loading: false});
       }).catch(function(err){
@@ -270,7 +289,9 @@ export default class Home extends React.Component {
                     </div>
                   : self.state.posts.map( function(post, index){
                     return(
-                      <div class="row post whiteBox" key={index}>
+                      <div key={'post'+index}>
+
+                      <div class="row post whiteBox" >
                         <div class="col-xs-12">
                           <h2>{post.title}</h2>
                           <h4>{STRINGS.posted} {post.created} {STRINGS.in} {post.category}</h4>
@@ -323,6 +344,20 @@ export default class Home extends React.Component {
                             </div>
                           </div>
                         }
+                      </div>
+                      { self.state.postID.length > 0 ?
+                        post.comments.map( function(comment, index){
+                          return (
+                          <div class="row comment whiteBox" key={'comment'+index} >
+                            <div class="col-xs-12">
+                              <strong>@{comment.author}</strong> - {moment(comment.time).format('MMMM Do YYYY, h:mm:ss a')}
+                              <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(comment.body)}} ></h4>
+                            </div>
+                          </div>
+                          )
+                        })
+                      : <div></div> }
+
                       </div>
                     )
                   })}
