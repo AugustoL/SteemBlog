@@ -4,11 +4,6 @@ html{
 	overflow: hidden;
 }
 
-@font-face {
-  font-family: 'FontAwesome';
-  src: url('fonts/fontawesome-webfont.ttf');
-}
-
 body{
 	height: 100%;
 	overflow: auto;
@@ -53,7 +48,6 @@ a{
 .titlebox{
 	padding: 5px 20px;
 	font-weight: 1000;
-	font-family: 'Raleway-Heavy';
 }
 .iconTitle{
 	margin-right: 10px;
@@ -64,7 +58,6 @@ a{
 .bodyPost{
 	margin-top: 10px;
 	font-size: 18px;
-  font-family: 'FontAwesome';
 }
 
 a{

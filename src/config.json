@@ -7,5 +7,6 @@
   "steem": {
     "username": "augustol",
     "fromPost": 10000
-  }
+  },
+  "allowChange": true
 }

@@ -18,6 +18,10 @@ var FacebookButton = ReactSocial.FacebookButton;
 const languages = require('../languages.json');
 const config = require('../config.json');
 
+const loadFromURL = true;
+
+var baseURL = 'http://'+window.location.host+'/#/';
+
 var showdown  = require('showdown');
 showdown.setFlavor('github');
 require('showdown-youtube');
@@ -39,6 +43,34 @@ export default class Home extends React.Component {
         }
         return null;
       }
+
+      if (loadFromURL){
+        if (getParameter('user')){
+          config.steem.username = getParameter('user');
+          baseURL += (baseURL.indexOf('?') > 0) ? '&user='+config.steem.username : '?user='+config.steem.username;
+        }
+        if (getParameter('title')){
+          config.blogTitle = getParameter('title');
+          baseURL += (baseURL.indexOf('?') > 0) ? '&title='+config.title : '?title='+config.title;
+        }
+        if (getParameter('fb')){
+          config.facebookLink = getParameter('fb');
+          baseURL += (baseURL.indexOf('?') > 0) ? '&fb='+config.fb : '?fb='+config.fb;
+        }
+        if (getParameter('twitter')){
+          config.twitterLink = getParameter('twitter');
+          baseURL += (baseURL.indexOf('?') > 0) ? '&twitter='+config.twitter : '?twitter='+config.twitter;
+        }
+        if (getParameter('linkedin')){
+          config.twitterLink = getParameter('linkedin');
+          baseURL += (baseURL.indexOf('?') > 0) ? '&linkedin='+config.linkedin : '?linkedin='+config.linkedin;
+        }
+        if (getParameter('github')){
+          config.twitterLink = getParameter('github');
+          baseURL += (baseURL.indexOf('?') > 0) ? '&github='+config.github : '?github='+config.github;
+        }
+      }
+      console.log('Base URL:',baseURL);
 
       this.state = {
         loading: true,
@@ -84,74 +116,90 @@ export default class Home extends React.Component {
       function getHistory(username, from, limit){
         console.log('Getting posts of',username,'from',from,', limit',limit);
         return new Promise(function(resolve, reject){
-          steem.api.getAccountHistory(username, from, limit, function(err, history) {
+          var history = [];
+          var fromPost = -1;
+          until( function() {
+            return (fromPost == 0);
+          }, function(callback){
+            steem.api.getAccountHistory(config.steem.username, fromPost, (fromPost < 1000 && fromPost > 0) ? fromPost : 1000, function(err, toAdd) {
+              if (err)
+                callback(err);
+              history.push(toAdd);
+              fromPost = toAdd[0][0];
+              callback(null);
+            })
+          }, function(err){
+
             if (err)
-              reject(err);
-            else{
+              console.error('Error getting all history:',err);
 
-              console.log('Account',username,'history:',history);
+            history = _.flatten(history);
+            history = _.orderBy(history, function(h){ return h[0]});
+            history = _.uniqBy(history, '0');
 
-              for (var i = 0; i < history.length; i++) {
-                if ((history[i][1].op[0] == 'comment')
-                  && (history[i][1].op[1].parent_author == "")
-                  && (history[i][1].op[1].author == username)
-                  && ( _.findIndex(posts, {permlink: history[i][1].op[1].permlink }) < 0)
-                ) {
-                    var cats = JSON.parse(history[i][1].op[1].json_metadata).tags;
-                    // Capitalize first letter
-                    cats.forEach(function(tag, i){
+            console.log('Account',username,'history:',history.length);
+
+            for (var i = 0; i < history.length; i++) {
+              if ((history[i][1].op[0] == 'comment')
+                && (history[i][1].op[1].parent_author == "")
+                && (history[i][1].op[1].author == username)
+                && ( _.findIndex(posts, {permlink: history[i][1].op[1].permlink }) < 0)
+              ) {
+                  var cats = JSON.parse(history[i][1].op[1].json_metadata).tags;
+                  // Capitalize first letter
+                  cats.forEach(function(tag, i){
+                    if (tag)
                       cats[i] = tag.charAt(0).toUpperCase() + tag.slice(1);;
-                    });
-                    posts.push({
-                      permlink: history[i][1].op[1].permlink,
-                      categories: cats,
-                      created: history[i][1].timestamp,
-                      comments: []
-                    })
-                  }
-              }
-              for (var i = 0; i < history.length; i++) {
-                if ((history[i][1].op[0] == 'comment')
-                  && (history[i][1].op[1].parent_author == username)
-                  && (history[i][1].op[1].author.length > 0)
-                  && ( _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) > -1)
-                )
-                  posts[ _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) ].comments.push({
-                    author: history[i][1].op[1].author,
-                    body: history[i][1].op[1].body,
-                    time: history[i][1].timestamp
                   });
-              }
-
-              // Remove tests posts and reverse array to order by date
-              posts = _.filter(posts, function(o) { return o.categories.indexOf('Test') < 0; }).reverse();
-
-              console.log('All account posts',posts);
-
-              // Get all categories
-              var categories = [];
-              for (var i = 0; i < posts.length; i++)
-                for (var z = 0; z < posts[i].categories.length; z++)
-                  if (!_.find(categories, {name : posts[i].categories[z]}))
-                    categories.push({name: posts[i].categories[z], quantity: 1});
-                  else
-                    _.find(categories, {name : posts[i].categories[z]}).quantity ++;
-
-              categories = _.orderBy(categories, ['quantity', 'name'] , ['desc', 'asc']);
-
-              // Get all months
-              var months = [];
-              for (var i = 0; i < posts.length; i++) {
-                var month = new Date(posts[i].created).getMonth()+1;
-                var year = new Date(posts[i].created).getFullYear();
-                if (!_.find(months, {month : month, year: year}))
-                  months.push({month : month, year: year, quantity: 1});
-                else
-                  _.find(months, {month : month, year: year}).quantity ++;
-              }
-
-              resolve({posts: posts, categories: categories, months: months});
+                  posts.push({
+                    permlink: history[i][1].op[1].permlink,
+                    categories: cats,
+                    created: history[i][1].timestamp,
+                    comments: []
+                  })
+                }
             }
+            for (var i = 0; i < history.length; i++) {
+              if ((history[i][1].op[0] == 'comment')
+                && (history[i][1].op[1].parent_author == username)
+                && (history[i][1].op[1].author.length > 0)
+                && ( _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) > -1)
+              )
+                posts[ _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) ].comments.push({
+                  author: history[i][1].op[1].author,
+                  body: history[i][1].op[1].body,
+                  time: history[i][1].timestamp
+                });
+            }
+
+            // Remove tests posts and reverse array to order by date
+            posts = _.filter(posts, function(o) { return o.categories.indexOf('Test') < 0; }).reverse();
+
+            console.log('All account posts',posts);
+
+            // Get all categories
+            var categories = [];
+            for (var i = 0; i < posts.length; i++)
+              for (var z = 0; z < posts[i].categories.length; z++)
+                if (!_.find(categories, {name : posts[i].categories[z]}))
+                  categories.push({name: posts[i].categories[z], quantity: 1});
+                else
+                  _.find(categories, {name : posts[i].categories[z]}).quantity ++;
+
+            categories = _.orderBy(categories, ['quantity', 'name'] , ['desc', 'asc']);
+
+            // Get all months
+            var months = [];
+            for (var i = 0; i < posts.length; i++) {
+              var month = new Date(posts[i].created).getMonth()+1;
+              var year = new Date(posts[i].created).getFullYear();
+              if (!_.find(months, {month : month, year: year}))
+                months.push({month : month, year: year, quantity: 1});
+              else
+                _.find(months, {month : month, year: year}).quantity ++;
+            }
+
+            resolve({posts: posts, categories: categories, months: months});
           })
         });
       }
@@ -190,40 +238,16 @@ export default class Home extends React.Component {
       return Promise.all([
         getAccount(config.steem.username),
         getFollow(config.steem.username),
-        getHistory(config.steem.username, 10000, 10000)
+        getHistory(config.steem.username, -1, 10000)
       ]);
-
-      // var allHistory = [];
-      // var fromPost = config.steem.fromPost;
-      // until( function() {
-      //   return ((allHistory.length > 0) && (allHistory[allHistory.length-1].length < 100));
-      // }, function(callback){
-      //   console.log('Getting posts from',fromPost);
-      //   fetch('https://api.steemjs.com/get_account_history?account=augustol&from='+fromPost+'&limit='+100)
-      //     .then((response) => {
-      //         response.json().then(function(json){
-      //           var toAdd = json;
-      //           toAdd = _.filter(toAdd, function(t){return t[1].block >= fromPost});
-      //           toAdd = _.orderBy(toAdd, function(t){return t[1].block});
-      //           console.log(toAdd[0][1].block, toAdd[toAdd.length-1][1].block);
-      //           fromPost = toAdd[toAdd.length-1][1].block;
-      //           allHistory.push(toAdd);
-      //           callback(null);
-      //         })
-      //     })
-      //     .catch(function(err){
-      //       callback(err);
-      //     })
-      // }, function(err){
-      //   if (err)
-      //     console.error(err);
-      //   console.log('Done:',allHistory);
-      // })
     }
 
     loadPost(id){
       var self = this;
-      window.location.hash = '#/?id='+id;
+      var actualHash = baseURL.split('/#/');
+      window.location.hash = (actualHash[1].length > 0) ?
+        '#/'+actualHash[1]+'&id='+id
+        : '#/?id='+id;
       var posts = this.state.allPosts;
       steem.api.getContent(config.steem.username, id, function(err, post) {
         if (err)
@@ -254,10 +278,14 @@ export default class Home extends React.Component {
     loadPosts(page, category, month){
       var self = this;
 
-      if (page > 1 || category != 'all' || month != 'all')
-        window.location.hash = '#/?page='+page+'&category='+category+'&month='+month;
-      else
-        window.location.hash = '#/';
+      if (page > 1 || category != 'all' || month != 'all'){
+        var actualHash = baseURL.split('/#/');
+        window.location.hash = (actualHash[1].length > 0) ?
+          '#/'+actualHash[1]+'&page='+page+'&category='+category+'&month='+month
+          : '#/?page='+page+'&category='+category+'&month='+month;
+      } else {
+        window.location.hash = baseURL.split('/#/')[1];
+      }
 
       var posts = self.state.allPosts;
 
@@ -375,7 +403,7 @@ export default class Home extends React.Component {
               </li>
             : <li/>
             }
-            <li class="text-center"><a href="#">{STRINGS.page} {self.state.page}</a></li>
+            <li class="text-center"><a>{STRINGS.page} {self.state.page}</a></li>
             { (self.state.posts.length == 10) ?
               <li class="pull-right">
                 <a onClick={ ()=> self.loadPosts(self.state.page+1, self.state.category, self.state.month)}>
