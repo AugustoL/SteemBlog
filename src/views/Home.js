@@ -24,8 +24,19 @@ var baseURL = 'http://'+window.location.host+'/#/';
 
 var showdown  = require('showdown');
 showdown.setFlavor('github');
+showdown.setOption('parseImgDimensions', true);
+showdown.setOption('simplifiedAutoLink', true);
+showdown.setOption('tables', true);
+showdown.setOption('tasklists', true);
+showdown.setOption('ghMentionsLink', 'https://steemit.com/@{u}');
+showdown.setOption('openLinksInNewWindow', true);
+
 require('showdown-youtube');
-var converter = new showdown.Converter({extensions: ['youtube']});
+var converter = new showdown.Converter({extensions: ['youtube', {
+  type: 'lang',
+  regex: /([a-z\-_0-9\/\:\.]*\.(jpg|jpeg|png|gif))/i,
+  replace: '<div class="row text-center"><img src="$1" width="100%" height="auto"/></div>'
+}]});
 
 export default class Home extends React.Component {
 
@@ -161,7 +172,7 @@ export default class Home extends React.Component {
                   // Capitalize first letter
                   cats.forEach(function(tag, i){
                     if (tag)
-                      cats[i] = tag.charAt(0).toUpperCase() + tag.slice(1);;
+                      cats[i] = tag.charAt(0).toUpperCase() + tag.slice(1);
                   });
                   posts.push({
                     permlink: history[i][1].op[1].permlink,
@@ -433,7 +444,7 @@ export default class Home extends React.Component {
             <div class="row post whiteBox" >
               <div class="col-xs-12">
                 <h2>{post.title}</h2>
-                <h4>{STRINGS.posted} {post.created} {STRINGS.in} {post.category}</h4>
+                <h4>{STRINGS.posted} {post.created} {STRINGS.in} {post.category.charAt(0).toUpperCase() + post.category.slice(1)}</h4>
               </div>
               <div class="col-xs-12 bodyPost" dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body)}} ></div>
               <div class="col-xs-12 text-center margin-top">
@@ -476,19 +487,18 @@ export default class Home extends React.Component {
       }
 
       function renderPostShort(post, index){
+        var span= document.createElement('span');
+        span.innerHTML = converter.makeHtml(post.body);
+        var text = span.textContent || span.innerText;
         return (
           <div key={'post'+index}>
             <div class="row post whiteBox" >
               <div class="col-xs-12">
                 <h2>{post.title}</h2>
-                <h4>{STRINGS.posted} {post.created} {STRINGS.in} {post.category}</h4>
+                <h4>{STRINGS.posted} {post.created} {STRINGS.in} {post.category.charAt(0).toUpperCase() + post.category.slice(1)}</h4>
               </div>
               <div class="col-xs-12">
-                {post.body.length > 250 ?
-                  <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body.substring(0,250)+' ...')}} ></h4>
-                :
-                  <h4 dangerouslySetInnerHTML={{"__html": converter.makeHtml(post.body)}} ></h4>
-                }
+                <h4 class="shortBody">{text.substring(0,300)}</h4>
               </div>
               <div class="col-xs-4 text-center">
                 <h3>{post.net_votes} <span class="fa fa-thumbs-up"></span></h3>

@@ -59,6 +59,12 @@ a{
 	margin-top: 10px;
 	font-size: 18px;
 }
+.shortBody{
+	overflow: hidden;
+	white-space: pre-line;
+	text-overflow: ellipsis;
+	height: 62px;
+}
 
 a{
 	cursor: pointer;
