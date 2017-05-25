@@ -37,6 +37,7 @@ export default class Home extends React.Component {
         }
         return null;
       }
+
       this.state = {
         loading: true,
         postID: getParameter('id') || 0,
@@ -50,7 +51,7 @@ export default class Home extends React.Component {
         categories: [],
         nodeInfo: {},
         profile: {},
-        strings: languages[Store.lang]
+        strings: (Store.lang && Store.lang == 'es') ? languages.es : languages.en
       }
     }
 
@@ -62,7 +63,7 @@ export default class Home extends React.Component {
       });
 
       self.loadData().then(function([allPosts, categories, months, profile]){
-        self.setState({allPosts: allPosts, months: months, categories: categories, profile: profile, strings: languages[Store.lang]});
+        self.setState({allPosts: allPosts, months: months, categories: categories, profile: profile});
         if (self.state.postID.length > 0)
           self.loadPost(self.state.postID);
         else
@@ -254,6 +255,7 @@ export default class Home extends React.Component {
 
     render() {
       var self = this;
+
       const STRINGS = this.state.strings;
 
       const loader =
