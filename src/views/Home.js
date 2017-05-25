@@ -16,9 +16,9 @@ var TwitterButton = ReactSocial.TwitterButton;
 var FacebookButton = ReactSocial.FacebookButton;
 
 const languages = require('../languages.json');
-const config = require('../config.json');
+let config = require('../config.json');
 
-const loadFromURL = true;
+const loadFromURL = false;
 
 var baseURL = 'http://'+window.location.host+'/#/';
 
@@ -45,29 +45,41 @@ export default class Home extends React.Component {
       }
 
       if (loadFromURL){
+
+        config = {
+          "blogTitle": "",
+          "facebookLink": "",
+          "twitterLink": "",
+          "linkedinLink": "",
+          "githubLink": "",
+          "steem": {
+            "username": ""
+          }
+        }
+
         if (getParameter('user')){
           config.steem.username = getParameter('user');
           baseURL += (baseURL.indexOf('?') > 0) ? '&user='+config.steem.username : '?user='+config.steem.username;
         }
         if (getParameter('title')){
           config.blogTitle = getParameter('title');
-          baseURL += (baseURL.indexOf('?') > 0) ? '&title='+config.title : '?title='+config.title;
+          baseURL += (baseURL.indexOf('?') > 0) ? '&title='+config.blogTitle : '?title='+config.blogTitle;
         }
         if (getParameter('fb')){
           config.facebookLink = getParameter('fb');
-          baseURL += (baseURL.indexOf('?') > 0) ? '&fb='+config.fb : '?fb='+config.fb;
+          baseURL += (baseURL.indexOf('?') > 0) ? '&fb='+config.facebookLink : '?fb='+config.facebookLink;
         }
         if (getParameter('twitter')){
           config.twitterLink = getParameter('twitter');
-          baseURL += (baseURL.indexOf('?') > 0) ? '&twitter='+config.twitter : '?twitter='+config.twitter;
+          baseURL += (baseURL.indexOf('?') > 0) ? '&twitter='+config.twitterLink : '?twitter='+config.twitterLink;
         }
         if (getParameter('linkedin')){
-          config.twitterLink = getParameter('linkedin');
-          baseURL += (baseURL.indexOf('?') > 0) ? '&linkedin='+config.linkedin : '?linkedin='+config.linkedin;
+          config.linkedinLink = getParameter('linkedin');
+          baseURL += (baseURL.indexOf('?') > 0) ? '&linkedin='+config.linkedinLink : '?linkedin='+config.linkedinLink;
         }
         if (getParameter('github')){
-          config.twitterLink = getParameter('github');
-          baseURL += (baseURL.indexOf('?') > 0) ? '&github='+config.github : '?github='+config.github;
+          config.githubLink = getParameter('github');
+          baseURL += (baseURL.indexOf('?') > 0) ? '&github='+config.githubLink : '?github='+config.githubLink;
         }
       }
       console.log('Base URL:',baseURL);
@@ -113,15 +125,15 @@ export default class Home extends React.Component {
       var posts = [];
       var categories = [];
 
-      function getHistory(username, from, limit){
-        console.log('Getting posts of',username,'from',from,', limit',limit);
+      function getHistory(username){
+        console.log('Getting posts of',username);
         return new Promise(function(resolve, reject){
           var history = [];
           var fromPost = -1;
           until( function() {
             return (fromPost == 0);
           }, function(callback){
-            steem.api.getAccountHistory(config.steem.username, fromPost, (fromPost < 1000 && fromPost > 0) ? fromPost : 1000, function(err, toAdd) {
+            steem.api.getAccountHistory(config.steem.username, fromPost, (fromPost < 10000 && fromPost > 0) ? fromPost : 10000, function(err, toAdd) {
               if (err)
                 callback(err);
               history.push(toAdd);
@@ -238,7 +250,7 @@ export default class Home extends React.Component {
       return Promise.all([
         getAccount(config.steem.username),
         getFollow(config.steem.username),
-        getHistory(config.steem.username, -1, 10000)
+        getHistory(config.steem.username)
       ]);
     }
 

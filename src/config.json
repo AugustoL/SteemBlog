@@ -5,8 +5,6 @@
   "linkedinLink": "https://ar.linkedin.com/in/augustolemble",
   "githubLink": "https://github.com/AugustoL",
   "steem": {
-    "username": "augustol",
-    "fromPost": 10000
-  },
-  "allowChange": true
+    "username": "augustol"
+  }
 }
