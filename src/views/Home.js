@@ -3,7 +3,9 @@ import {Link} from "react-router";
 
 import steem from 'steem';
 import moment from 'moment';
+import http from 'http';
 import _ from 'lodash';
+import until from 'async/until';
 
 import Dispatcher from "../Dispatcher";
 import Store from "../Store";
@@ -51,6 +53,7 @@ export default class Home extends React.Component {
         categories: [],
         nodeInfo: {},
         profile: {},
+        follow: {follower_count: 0, following_count: 0},
         strings: (Store.lang && Store.lang == 'es') ? languages.es : languages.en
       }
     }
@@ -62,8 +65,8 @@ export default class Home extends React.Component {
         self.setState({strings: languages[Store.lang]});
       });
 
-      self.loadData().then(function([allPosts, categories, months, profile]){
-        self.setState({allPosts: allPosts, months: months, categories: categories, profile: profile});
+      self.loadData().then(function([profile, follow, history]){
+        self.setState({allPosts: history.posts, months: history.months, categories: history.categories, profile: profile, follow: follow});
         if (self.state.postID.length > 0)
           self.loadPost(self.state.postID);
         else
@@ -77,96 +80,145 @@ export default class Home extends React.Component {
       var postsPermLinks = [];
       var posts = [];
       var categories = [];
-      return new Promise(function(resolve, reject){
-        steem.api.getAccounts([config.steem.username], function(err, accounts) {
-          var profile = {};
-          console.log('Account',config.steem.username,'data:',accounts[0]);
-          console.log('Account',config.steem.username,'profile:', JSON.parse(accounts[0].json_metadata));
-          profile = JSON.parse(accounts[0].json_metadata).profile;
 
-          // steem.api.getDynamicGlobalProperties(function(err, result) {
-          //   console.log('Chain', result);
-          // });
+      function getHistory(username, from, limit){
+        console.log('Getting posts of',username,'from',from,', limit',limit);
+        return new Promise(function(resolve, reject){
+          steem.api.getAccountHistory(username, from, limit, function(err, history) {
+            if (err)
+              reject(err);
+            else{
 
-          function getHistory(from, limit){
-            console.log('Getting posts from',from,', limit',limit);
-            return new Promise(function(resolveHistory, rejectHistory){
-              steem.api.getAccountHistory(config.steem.username, from, limit, function(err, history) {
-                if (err)
-                  rejectHistory(err);
-                else{
-                  resolveHistory(history);
-                }
-              })
-            });
-          }
+              console.log('Account',username,'history:',history);
 
-          getHistory(config.steem.fromPost, 10000).then(function(history){
-            console.log('Account',config.steem.username,'history:',history);
-            for (var i = 0; i < history.length; i++) {
-              if ((history[i][1].op[0] == 'comment')
-                && (history[i][1].op[1].parent_author == "")
-                && (history[i][1].op[1].author == config.steem.username)
-                && ( _.findIndex(posts, {permlink: history[i][1].op[1].permlink }) < 0)
-              ) {
-                  var cats = JSON.parse(history[i][1].op[1].json_metadata).tags;
-                  // Capitalize first letter
-                  cats.forEach(function(tag, i){
-                    cats[i] = tag.charAt(0).toUpperCase() + tag.slice(1);;
+              for (var i = 0; i < history.length; i++) {
+                if ((history[i][1].op[0] == 'comment')
+                  && (history[i][1].op[1].parent_author == "")
+                  && (history[i][1].op[1].author == username)
+                  && ( _.findIndex(posts, {permlink: history[i][1].op[1].permlink }) < 0)
+                ) {
+                    var cats = JSON.parse(history[i][1].op[1].json_metadata).tags;
+                    // Capitalize first letter
+                    cats.forEach(function(tag, i){
+                      cats[i] = tag.charAt(0).toUpperCase() + tag.slice(1);;
+                    });
+                    posts.push({
+                      permlink: history[i][1].op[1].permlink,
+                      categories: cats,
+                      created: history[i][1].timestamp,
+                      comments: []
+                    })
+                  }
+              }
+              for (var i = 0; i < history.length; i++) {
+                if ((history[i][1].op[0] == 'comment')
+                  && (history[i][1].op[1].parent_author == username)
+                  && (history[i][1].op[1].author.length > 0)
+                  && ( _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) > -1)
+                )
+                  posts[ _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) ].comments.push({
+                    author: history[i][1].op[1].author,
+                    body: history[i][1].op[1].body,
+                    time: history[i][1].timestamp
                   });
-                  posts.push({
-                    permlink: history[i][1].op[1].permlink,
-                    categories: cats,
-                    created: history[i][1].timestamp,
-                    comments: []
-                  })
-                }
-            }
-            for (var i = 0; i < history.length; i++) {
-              if ((history[i][1].op[0] == 'comment')
-                && (history[i][1].op[1].parent_author == config.steem.username)
-                && (history[i][1].op[1].author.length > 0)
-                && ( _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) > -1)
-              )
-                posts[ _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) ].comments.push({
-                  author: history[i][1].op[1].author,
-                  body: history[i][1].op[1].body,
-                  time: history[i][1].timestamp
-                });
-            }
+              }
 
-            // Remove tests posts and reverse array to order by date
-            posts = _.filter(posts, function(o) { return o.categories.indexOf('Test') < 0; }).reverse();
+              // Remove tests posts and reverse array to order by date
+              posts = _.filter(posts, function(o) { return o.categories.indexOf('Test') < 0; }).reverse();
 
-            console.log('All account posts',posts);
+              console.log('All account posts',posts);
 
-            // Get all categories
-            var categories = [];
-            for (var i = 0; i < posts.length; i++)
-              for (var z = 0; z < posts[i].categories.length; z++)
-                if (!_.find(categories, {name : posts[i].categories[z]}))
-                  categories.push({name: posts[i].categories[z], quantity: 1});
+              // Get all categories
+              var categories = [];
+              for (var i = 0; i < posts.length; i++)
+                for (var z = 0; z < posts[i].categories.length; z++)
+                  if (!_.find(categories, {name : posts[i].categories[z]}))
+                    categories.push({name: posts[i].categories[z], quantity: 1});
+                  else
+                    _.find(categories, {name : posts[i].categories[z]}).quantity ++;
+
+              categories = _.orderBy(categories, ['quantity', 'name'] , ['desc', 'asc']);
+
+              // Get all months
+              var months = [];
+              for (var i = 0; i < posts.length; i++) {
+                var month = new Date(posts[i].created).getMonth()+1;
+                var year = new Date(posts[i].created).getFullYear();
+                if (!_.find(months, {month : month, year: year}))
+                  months.push({month : month, year: year, quantity: 1});
                 else
-                  _.find(categories, {name : posts[i].categories[z]}).quantity ++;
+                  _.find(months, {month : month, year: year}).quantity ++;
+              }
 
-            categories = _.orderBy(categories, ['quantity', 'name'] , ['desc', 'asc']);
-
-            // Get all months
-            var months = [];
-            for (var i = 0; i < posts.length; i++) {
-              var month = new Date(posts[i].created).getMonth()+1;
-              var year = new Date(posts[i].created).getFullYear();
-              if (!_.find(months, {month : month, year: year}))
-                months.push({month : month, year: year, quantity: 1});
-              else
-                _.find(months, {month : month, year: year}).quantity ++;
+              resolve({posts: posts, categories: categories, months: months});
             }
-
-            resolve([posts, categories, months, profile]);
-
-          });
+          })
         });
-      })
+      }
+
+      function getAccount(account){
+        console.log('Getting accounts',account);
+        return new Promise(function(resolve, reject){
+          steem.api.getAccounts([account], function(err, accounts) {
+            if (err)
+              reject(err);
+            else{
+              var profile = {};
+              console.log('Account',config.steem.username,'data:',accounts[0]);
+              console.log('Account',config.steem.username,'profile:', JSON.parse(accounts[0].json_metadata));
+              profile = JSON.parse(accounts[0].json_metadata).profile;
+              resolve(profile);
+            }
+          })
+        });
+      }
+
+      function getFollow(account){
+        console.log('Getting follow from',account);
+        return new Promise(function(resolve, reject){
+          steem.api.getFollowCount(account, function(err, follow) {
+            if (err)
+              reject(err);
+            else{
+              console.log('Follow', follow);
+              resolve(follow);
+            }
+          })
+        });
+      }
+
+      return Promise.all([
+        getAccount(config.steem.username),
+        getFollow(config.steem.username),
+        getHistory(config.steem.username, 10000, 10000)
+      ]);
+
+      // var allHistory = [];
+      // var fromPost = config.steem.fromPost;
+      // until( function() {
+      //   return ((allHistory.length > 0) && (allHistory[allHistory.length-1].length < 100));
+      // }, function(callback){
+      //   console.log('Getting posts from',fromPost);
+      //   fetch('https://api.steemjs.com/get_account_history?account=augustol&from='+fromPost+'&limit='+100)
+      //     .then((response) => {
+      //         response.json().then(function(json){
+      //           var toAdd = json;
+      //           toAdd = _.filter(toAdd, function(t){return t[1].block >= fromPost});
+      //           toAdd = _.orderBy(toAdd, function(t){return t[1].block});
+      //           console.log(toAdd[0][1].block, toAdd[toAdd.length-1][1].block);
+      //           fromPost = toAdd[toAdd.length-1][1].block;
+      //           allHistory.push(toAdd);
+      //           callback(null);
+      //         })
+      //     })
+      //     .catch(function(err){
+      //       callback(err);
+      //     })
+      // }, function(err){
+      //   if (err)
+      //     console.error(err);
+      //   console.log('Done:',allHistory);
+      // })
     }
 
     loadPost(id){
@@ -271,7 +323,7 @@ export default class Home extends React.Component {
       const header =
         <div class="row post whiteBox titlebox">
           <h1>
-            <a  class="titleLink" onClick={() => self.loadPosts(1, 'all', 'all')}>
+            <a class="titleLink" onClick={() => self.loadPosts(1, 'all', 'all')}>
               {config.blogTitle}
             </a>
             <a href={"https://steemit.com/@"+config.steem.username} target="_blank" class="fa iconTitle pull-right">
@@ -290,6 +342,8 @@ export default class Home extends React.Component {
             <h3 class="no-margin margin-bottom">{STRINGS.about}</h3>
             <h4>{self.state.profile.about}</h4>
             <h4>{self.state.allPosts.length} Posts</h4>
+            <h4>{self.state.follow.follower_count} Followers</h4>
+            <h4>{self.state.follow.following_count} Following</h4>
           </div>
           <div class="whiteBox margin-top text-center">
             <h3 class="no-margin margin-bottom">{STRINGS.languages}</h3>
