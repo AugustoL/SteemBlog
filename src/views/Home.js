@@ -18,7 +18,7 @@ var FacebookButton = ReactSocial.FacebookButton;
 const languages = require('../languages.json');
 let config = require('../config.json');
 
-const loadFromURL = false;
+const loadFromURL = true;
 
 var baseURL = 'http://'+window.location.host+'/#/';
 
@@ -182,18 +182,6 @@ export default class Home extends React.Component {
                   })
                 }
             }
-            for (var i = 0; i < history.length; i++) {
-              if ((history[i][1].op[0] == 'comment')
-                && (history[i][1].op[1].parent_author == username)
-                && (history[i][1].op[1].author.length > 0)
-                && ( _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) > -1)
-              )
-                posts[ _.findIndex(posts, {permlink: history[i][1].op[1].parent_permlink }) ].comments.push({
-                  author: history[i][1].op[1].author,
-                  body: history[i][1].op[1].body,
-                  time: history[i][1].timestamp
-                });
-            }
 
             // Remove tests posts and reverse array to order by date
             posts = _.filter(posts, function(o) { return o.categories.indexOf('Test') < 0; }).reverse();
@@ -272,15 +260,16 @@ export default class Home extends React.Component {
         '#/'+actualHash[1]+'&id='+id
         : '#/?id='+id;
       var posts = this.state.allPosts;
-      steem.api.getContent(config.steem.username, id, function(err, post) {
-        if (err)
-          rejectPost(err);
-        else{
-          post.body = self.convertVideos(post.body);
-          post = _.merge(posts[ _.findIndex(posts, {permlink: post.permlink }) ], post);
-          self.setState({postID: id, page: 1, category: 'all', month: 'all', posts: [post], loading: false});
-        }
-      });
+
+      Promise.all([
+        steem.api.getContent(config.steem.username, id),
+        steem.api.getContentReplies(config.steem.username, id)
+      ]).then(function([post, replies]){
+        post.body = self.convertVideos(post.body);
+        post.comments = replies;
+        post = _.merge(posts[ _.findIndex(posts, {permlink: post.permlink }) ], post);
+        self.setState({postID: id, page: 1, category: 'all', month: 'all', posts: [post], loading: false});
+      })
     }
 
     // Function to convert video and youtube links to video player

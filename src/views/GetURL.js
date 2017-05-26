@@ -59,7 +59,7 @@ export default class GetURL extends React.Component {
       var self = this;
       var baseURL = 'Username Required';
       if (self.state.username.length > 0){
-        baseURL = 'http://steemitblog.io/#/';
+        baseURL = 'http://'+window.location.host+'/#/';
         baseURL += (baseURL.indexOf('?') > 0) ? '&user='+username : '?user='+username;
         if (title.length > 0){
           baseURL += (baseURL.indexOf('?') > 0) ? '&title='+title : '?title='+title;
