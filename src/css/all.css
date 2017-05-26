@@ -4,6 +4,11 @@ html{
 	overflow: hidden;
 }
 
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('fonts/fontawesome-webfont.ttf');
+}
+
 body{
 	height: 100%;
 	overflow: auto;
