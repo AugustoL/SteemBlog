@@ -1,8 +1,8 @@
-# SteemitBlog
+# SteemBlog
 
 ## Install
 
-`git clone https://github.com/AugustoL/SteemitBlog`
+`git clone https://github.com/AugustoL/SteemBlog`
 
 `npm install`
 
@@ -13,7 +13,7 @@ Edit the config file with the blog title, social media urls and username in stee
 Example:
 ```
 {
-  "blogTitle": "AugustoL SteemitBlog",
+  "blogTitle": "AugustoL SteemBlog",
   "facebookLink": "https://fb.com/augusto8",
   "twitterLink": "https://twitter.com/LembleAugusto",
   "linkedinLink": "https://ar.linkedin.com/in/augustolemble",
